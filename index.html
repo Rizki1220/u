@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Special For You</title>
+    <style>
+        /* Reset CSS */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e); /* Latar malam gelap */
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: white;
+            position: relative;
+        }
+
+        /* 1. KANVAS KEMBANG API (Wajib Ada) */
+        #fireworks {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1; /* Di belakang teks */
+            pointer-events: none;
+        }
+
+        .container {
+            text-align: center;
+            z-index: 10;
+            position: relative;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        /* Amplop */
+        #envelope {
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            z-index: 20;
+        }
+
+        #envelope:hover {
+            transform: scale(1.05);
+        }
+
+        .envelope-box {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(233, 30, 99, 0.5); /* Glow effect */
+            color: #333;
+        }
+
+        .heart-icon {
+            color: #e91e63;
+            font-size: 50px;
+            animation: pulse 1.5s infinite;
+            margin: 10px 0;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Kotak Pesan */
+        #message-box {
+            display: none;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            text-align: left;
+            color: #333;
+            max-height: 70vh;
+            overflow-y: auto;
+            border: 2px solid #e91e63;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .profile-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+            background-color: #e91e63;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .profile-name {
+            font-weight: bold;
+            color: #e91e63;
+        }
+
+        .message-content {
+            line-height: 1.8;
+            white-space: pre-wrap; 
+            font-size: 15px;
+            color:#333
+        }
+
+        /* Tombol Lanjut (Opsional) */
+        .btn-finish {
+            display: none;
+            margin-top: 15px;
+            background: #e91e63;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        /* Ucapan Akhir */
+        #final-greeting {
+            display: none; 
+            font-size: 3em;
+            font-weight: bold;
+            text-shadow: 0 0 15px #ff00de;
+            animation: zoomIn 1s ease-out;
+        }
+
+        @keyframes zoomIn {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="fireworks"></canvas>
+	<div class="container">
+        <div id="envelope">
+            <div class="envelope-box">
+                <h2>For u 💌</h2>
+                <div class="heart-icon">☺️</div>
+                <p>Click</p>
+            </div>
+        </div>
+
+        <div id="message-box">
+            <div class="profile-header">
+                <div class="profile-img">🐼</div>
+                <div class="profile-name">Angeline</div>
+            </div>
+            <div class="message-content" id="typed-text"></div>
+            <button class="btn-finish" id="btn-finish" onclick="showFinalGreeting()">click 🎆</button>
+        </div>
+
+        <div id="final-greeting">
+            新年快乐<br> 🎉
+        </div>
+    </div>
+
+    <script>
+        // --- LOGIKA KEMBANG API (Canvas) ---
+        const canvas = document.getElementById('fireworks');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function createParticle(x, y) {
+            const particleCount = 50; // Jumlah partikel per ledakan
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    colors: ['#ff0099', '#f3ffbd', '#ff0022', '#12c2e9', '#c471ed'], // Warna-warni
+                    color: null,
+                    radius: Math.random() * 3 + 1,
+                    velocity: {
+                        x: (Math.random() - 0.5) * 8, // Sebaran horizontal
+                        y: (Math.random() - 0.5) * 8  // Sebaran vertikal
+                    },
+                    alpha: 1,
+                    life: Math.random() * 50 + 50
+                });
+                particles[particles.length - 1].color = particles[particles.length - 1].colors[Math.floor(Math.random() * 5)];
+            }
+        }
+
+        function animateFireworks() {
+            requestAnimationFrame(animateFireworks);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; // Efek jejak pudar
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach((particle, index) => {
+                if (particle.alpha > 0) {
+                    ctx.save();
+                    ctx.globalAlpha = particle.alpha;
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = particle.color;
+                    ctx.fill();
+                    ctx.restore();
+
+                    particle.velocity.y += 0.02; // Gravitasi ringan
+                    particle.x += particle.velocity.x;
+                    particle.y += particle.velocity.y;
+                    particle.alpha -= 0.01;
+                } else {
+                    particles.splice(index, 1);
+                }
+            });
+        }
+
+        // Fungsi loop kembang api otomatis
+        let fireworksInterval;
+        function startFireworks() {
+            animateFireworks();
+            // Buat ledakan setiap 500ms (0.5 detik)
+            fireworksInterval = setInterval(() => {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height * 0.6; // Muncul di bagian atas layar
+                createParticle(x, y);
+            }, 500);
+        }
+
+        // --- LOGIKA PESAN ---
+        // PENTING: Gunakan tanda backtick () untuk teks panjang
+        const fullMessage = `新年快乐! 🎆🎇
+希望新的一年里
+你平安、健康、顺顺利利！
+愿你永远自信、勇敢追梦。
+学习顺利，每一份努力都不会白费。
+希望你能考出自己理想的成绩，
+顺利毕业，
+并且找到一份真正符合你心意、让你开心的工作。
+未来的路虽然不一定容易，
+但你一定可以靠自己的努力走得很远。
+加油，你真的很棒！💪✨
+from me ☺️`;
+
+        const envelope = document.getElementById('envelope');
+        const messageBox = document.getElementById('message-box');
+        const typedTextContainer = document.getElementById('typed-text');
+        const finalGreeting = document.getElementById('final-greeting');
+        const btnFinish = document.getElementById('btn-finish');
+
+        let i = 0;
+        const typingSpeed = 40; 
+
+        function typeWriter() {
+            if (i < fullMessage.length) {
+                typedTextContainer.textContent += fullMessage.charAt(i);
+                i++;
+                setTimeout(typeWriter, typingSpeed);
+                // Scroll otomatis ke bawah saat ngetik
+                messageBox.scrollTop = messageBox.scrollHeight;
+            } else {
+                btnFinish.style.display = 'block'; // Tampilkan tombol setelah selesai ngetik
+            }
+        }
+
+        function showFinalGreeting() {
+            messageBox.style.display = 'none';
+            finalGreeting.style.display = 'block';
+            // Percepat kembang api saat ending
+            clearInterval(fireworksInterval);
+            setInterval(() => {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height * 0.8; 
+                createParticle(x, y);
+            }, 200); 
+        }
+
+        // Saat amplop diklik
+        envelope.addEventListener('click', function() {
+            envelope.style.display = 'none';
+            messageBox.style.display = 'block';
+            startFireworks(); // MULAI KEMBANG API SEKARANG!
+            typeWriter();
+        });
+
+    </script>
+</body>
+</html>
